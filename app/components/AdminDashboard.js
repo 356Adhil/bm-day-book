@@ -116,7 +116,12 @@ export default function AdminDashboard() {
     }
 
     fetchReports(selectedDate); // Fetch reports based on the selected date
-  }, [selectedDate]); // Dependency on selectedDate
+  }, [
+    selectedDate,
+    previousStats.totalSales,
+    previousStats.totalExpenses,
+    previousStats.profitMargin,
+  ]); // Dependency on selectedDate
 
   // Custom Button Component
   const Button = ({
