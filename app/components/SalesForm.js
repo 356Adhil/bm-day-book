@@ -73,7 +73,6 @@ export default function SalesForm({ onSubmit, loading }) {
                           focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 
                           transition-all duration-200"
                 placeholder="INV-001"
-                required
               />
             </div>
           </div>

@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -19,6 +21,9 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
     try {
       const response = await axios.post("/api/auth/login", {
         email,
@@ -29,11 +34,16 @@ export default function Login() {
         localStorage.setItem("token", response.data.token);
         router.push("/dashboard");
       } else {
-        alert(response.data.message || "Login failed");
+        setError(response.data.message || "Login failed. Please try again.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(error.response?.data?.message || "Login failed");
+      setError(
+        error.response?.data?.message ||
+          "Unable to connect to the server. Please check your internet connection and try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -48,6 +58,13 @@ export default function Login() {
           <p className="text-gray-600">Sign in to continue</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl">
+            {error}
+          </div>
+        )}
+
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-6">
           {/* Email Input */}
@@ -60,8 +77,9 @@ export default function Login() {
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white disabled:opacity-50 disabled:cursor-not-allowed"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -75,37 +93,30 @@ export default function Login() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white disabled:opacity-50 disabled:cursor-not-allowed"
               required
+              disabled={isLoading}
             />
           </div>
-
-          {/* Forgot Password Link */}
-          {/* <div className="text-right">
-            <a href="#" className="text-sm text-blue-600 hover:text-blue-800">
-              Forgot password?
-            </a>
-          </div> */}
 
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl flex items-center justify-center space-x-2 transition-colors shadow-lg shadow-blue-200"
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl flex items-center justify-center space-x-2 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span>Sign In</span>
-            <ArrowRight className="h-5 w-5" />
+            {isLoading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                <span>Signing In...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In</span>
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </>
+            )}
           </button>
-
-          {/* Sign Up Link */}
-          {/* <p className="text-center text-gray-600 text-sm">
-            Don't have an account?{" "}
-            <a
-              href="#"
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Sign up
-            </a>
-          </p> */}
         </form>
       </div>
     </div>

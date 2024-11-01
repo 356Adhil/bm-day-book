@@ -88,7 +88,6 @@ export default function ExpensesForm({ onSubmit, loading }) {
                           focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 
                           transition-all duration-200 resize-none h-24"
                 placeholder="Enter expense details..."
-                required
               />
             </div>
           </div>
