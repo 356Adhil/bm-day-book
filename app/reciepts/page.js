@@ -19,7 +19,7 @@ export default function Receipts() {
       });
       // Optionally, show a success message or clear the error
       setError(null);
-      router.push("/receipts");
+      router.push("/reciepts-entries");
     } catch (error) {
       console.error("Error adding receipt:", error);
       setError("Failed to add receipt. Please try again.");
