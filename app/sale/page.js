@@ -25,7 +25,7 @@ export default function Sales() {
       console.log("Response from API:", response.data); // Log response from the API
 
       // Redirect back to the dashboard after successful submission
-      router.push("/dashboard");
+      router.push("/sale-entries");
     } catch (error) {
       console.error("Error submitting sales data:", error);
       alert("Failed to submit sales data. Please try again."); // Show an alert on error
@@ -38,7 +38,6 @@ export default function Sales() {
     <>
       <Header />
       <div className="p-6">
-        <h1 className="text-2xl font-semibold mb-4">Sales Entry</h1>
         <SalesForm onSubmit={handleFormSubmit} loading={loading} />
       </div>
     </>

@@ -100,11 +100,13 @@ export default function Dashboard() {
               className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 
                           bg-clip-text text-transparent"
             >
-              Hi, Adhil
+              Hi, Shafi
             </h1>
             <SparklesIcon className="w-5 h-5 text-yellow-400 animate-pulse" />
           </div>
-          <p className="text-sm text-gray-500">Let&apos;s manage your business</p>
+          <p className="text-sm text-gray-500">
+            Let&apos;s manage your business
+          </p>
         </div>
         <div className="relative group">
           <div

@@ -119,7 +119,7 @@ export default function ExpenseEntries() {
           <div className="bg-white rounded-2xl p-6 shadow-sm">
             <div className="text-sm text-gray-500 mb-2">Total Expenses</div>
             <div className="text-3xl font-bold text-gray-800 mb-1">
-              $
+              ₹
               {expenses
                 .reduce((sum, expense) => sum + Number(expense.amount), 0)
                 .toLocaleString()}
@@ -153,7 +153,7 @@ export default function ExpenseEntries() {
                         </button>
                       </div>
                       <div className="text-xl font-bold text-gray-800">
-                        ${Number(expense.amount).toLocaleString()}
+                        ₹{Number(expense.amount).toLocaleString()}
                       </div>
                       <div className="text-sm text-gray-400 mt-1">
                         {new Date(expense.date).toLocaleDateString("en-US", {
@@ -169,9 +169,6 @@ export default function ExpenseEntries() {
             ) : (
               <div className="text-center py-12">
                 <div className="text-gray-400 mb-2">No expense entries yet</div>
-                <button className="text-blue-500 font-medium hover:text-blue-600">
-                  Add your first expense
-                </button>
               </div>
             )}
           </div>
