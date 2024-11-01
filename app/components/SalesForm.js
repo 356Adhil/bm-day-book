@@ -36,7 +36,7 @@ export default function SalesForm({ onSubmit, loading }) {
                 ₹
               </div>
               <input
-                type="number"
+                type="tel"
                 value={saleAmount}
                 onChange={(e) => setSaleAmount(e.target.value)}
                 onFocus={() => setFocusedField("amount")}
@@ -64,7 +64,7 @@ export default function SalesForm({ onSubmit, loading }) {
                 #
               </div>
               <input
-                type="text"
+                type="tel"
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 onFocus={() => setFocusedField("invoice")}

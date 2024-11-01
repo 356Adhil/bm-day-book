@@ -195,7 +195,7 @@ export default function SaleEntries() {
                     Amount
                   </label>
                   <input
-                    type="number"
+                    type="tel"
                     value={updatedAmount}
                     onChange={(e) => setUpdatedAmount(e.target.value)}
                     placeholder="Enter amount"
