@@ -13,6 +13,8 @@ import {
   TrendingUpIcon,
   TrendingDownIcon,
   SparklesIcon,
+  ChartPie,
+  ScanSearch,
 } from "lucide-react";
 import Header from "../components/Header";
 import AdminDashboard from "../components/AdminDashboard";
@@ -188,6 +190,16 @@ export default function Dashboard() {
             label="View Expenses"
             icon={ClipboardListIcon}
             path="/expenses-entries"
+          />
+          <QuickActionButton
+            label="Receipts"
+            icon={ChartPie}
+            path="/reciepts"
+          />
+          <QuickActionButton
+            label="View Receipts"
+            icon={ScanSearch}
+            path="/reciepts-entries"
           />
           <QuickActionButton
             label="Close Day"
