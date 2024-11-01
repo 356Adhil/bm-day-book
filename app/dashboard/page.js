@@ -104,7 +104,7 @@ export default function Dashboard() {
             </h1>
             <SparklesIcon className="w-5 h-5 text-yellow-400 animate-pulse" />
           </div>
-          <p className="text-sm text-gray-500">Let's manage your business</p>
+          <p className="text-sm text-gray-500">Let&apos;s manage your business</p>
         </div>
         <div className="relative group">
           <div
