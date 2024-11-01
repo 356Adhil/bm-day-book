@@ -53,7 +53,7 @@ export default function HomePage() {
             Welcome Back
           </h1>
           <p className="text-gray-600">
-            Let's manage your business efficiently
+            Let&apos;s manage your business efficiently
           </p>
         </div>
 
