@@ -1,10 +1,16 @@
-import nextPwa from "next-pwa";
+/** @type {import('next').NextConfig} */
+import withPWA from "next-pwa";
 
-const withPWA = nextPwa({
-  dest: "public", // Specify where to output the service worker file
-  disable: process.env.NODE_ENV === "development", // Disable PWA in development mode
-});
+const nextConfig = {
+  // Any Next.js specific configurations go here
+  reactStrictMode: true, // Example configuration
+};
 
 export default withPWA({
-  // Other Next.js configuration options can go here
+  ...nextConfig,
+  pwa: {
+    dest: "public",
+    register: true,
+    skipWaiting: true,
+  },
 });
