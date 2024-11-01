@@ -8,12 +8,10 @@ const expenseSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: true,
   },
   enteredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', // Reference to the employee who entered the expense
-    required: true,
   },
   date: {
     type: Date,

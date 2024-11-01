@@ -9,7 +9,6 @@ const saleSchema = new mongoose.Schema(
     },
     invoiceNumber: {
       type: String,
-      required: true,
     },
     enteredBy: {
       type: mongoose.Schema.Types.ObjectId,
