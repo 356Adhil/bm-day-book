@@ -229,6 +229,7 @@ export default function SaleEntries() {
           </div>
         )}
       </div>
+      <Header />
     </div>
   );
 }

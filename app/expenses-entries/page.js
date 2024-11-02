@@ -229,6 +229,7 @@ export default function ExpenseEntries() {
           </div>
         )}
       </div>
+      <Header />
     </div>
   );
 }

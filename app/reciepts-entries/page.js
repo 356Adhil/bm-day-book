@@ -229,6 +229,7 @@ export default function ReceiptEntries() {
           </div>
         )}
       </div>
+      <Header />
     </div>
   );
 }

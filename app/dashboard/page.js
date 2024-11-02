@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import {
@@ -8,7 +8,6 @@ import {
   ClipboardListIcon,
   ReceiptIcon,
   PlusCircleIcon,
-  LogOutIcon,
   UserIcon,
   TrendingUpIcon,
   TrendingDownIcon,
@@ -19,95 +18,127 @@ import {
 import Header from "../components/Header";
 import AdminDashboard from "../components/AdminDashboard";
 import CloseDayModal from "../components/CloseDayModal";
+import { useQuery } from "@tanstack/react-query";
 
-export default function Dashboard() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [sales, setSales] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+// API functions
+const fetchUserData = async (token) => {
+  if (!token) throw new Error("Token not found");
+  const response = await axios.get("/api/auth/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return response.data?.user;
+};
+
+const fetchSalesData = async (token) => {
+  const response = await axios.get("/api/reports/sales/list", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+const fetchExpensesData = async (token) => {
+  const response = await axios.get("/api/reports/expenses/list", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// Quick Action Button Component
+const QuickActionButton = ({ label, icon: Icon, path, onClick }) => (
+  <button
+    onClick={onClick}
+    className="group relative flex flex-col items-center justify-center p-4 bg-white 
+               rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300
+               hover:-translate-y-1 overflow-hidden"
+  >
+    <div
+      className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+    />
+    <div
+      className="relative z-10 flex items-center justify-center w-12 h-12 mb-2
+                    rounded-xl bg-blue-50 group-hover:bg-white/20 transition-all duration-300"
+    >
+      <Icon className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors duration-300" />
+    </div>
+    <span
+      className="relative z-10 text-sm font-medium text-gray-700 
+                     group-hover:text-white transition-colors duration-300"
+    >
+      {label}
+    </span>
+  </button>
+);
+
+// Loading Skeleton Component
+const LoadingSkeleton = () => (
+  <div className="space-y-8 animate-pulse">
+    <div className="h-12 bg-gray-200 rounded-lg w-3/4" />
+    <div className="grid grid-cols-2 gap-4">
+      <div className="h-32 bg-gray-200 rounded-2xl" />
+      <div className="h-32 bg-gray-200 rounded-2xl" />
+    </div>
+    <div className="space-y-4">
+      <div className="h-8 bg-gray-200 rounded w-1/4" />
+      <div className="grid grid-cols-2 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-24 bg-gray-200 rounded-2xl" />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// Error Display Component
+const ErrorDisplay = ({ error, retryFn }) => (
+  <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+    <p className="text-red-600 font-medium">{error}</p>
+    <button
+      onClick={retryFn}
+      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+    >
+      Retry
+    </button>
+  </div>
+);
+
+// User Dashboard Component
+const UserDashboard = ({ sales, expenses, isLoading, error }) => {
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("Token not found");
-
-        const response = await axios.get("/api/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.data?.user) {
-          const saleData = await axios.get("/api/reports/sales/list", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setSales(saleData.data);
-
-          const expenseData = await axios.get("/api/reports/expenses/list", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setExpenses(expenseData.data);
-
-          setUser(response.data.user);
-        } else {
-          router.push("/login");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        router.push("/login");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
-        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (error) {
+    return <ErrorDisplay error={error} />;
   }
 
-  const QuickActionButton = ({ label, icon: Icon, path }) => (
-    <button
-      onClick={() => router.push(path)}
-      className="group relative flex flex-col items-center justify-center p-4 bg-white 
-                 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300
-                 hover:-translate-y-1 overflow-hidden"
-    >
-      {/* Gradient Background on Hover */}
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-      />
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
 
-      {/* Icon Container */}
-      <div
-        className="relative z-10 flex items-center justify-center w-12 h-12 mb-2
-                    rounded-xl bg-blue-50 group-hover:bg-white/20 transition-all duration-300"
-      >
-        <Icon className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors duration-300" />
-      </div>
-
-      {/* Label */}
-      <span
-        className="relative z-10 text-sm font-medium text-gray-700 
-                     group-hover:text-white transition-colors duration-300"
-      >
-        {label}
-      </span>
-    </button>
+  const totalSales = sales.reduce((sum, sale) => sum + Number(sale.amount), 0);
+  const totalExpenses = expenses.reduce(
+    (sum, expense) => sum + Number(expense.amount),
+    0
   );
 
-  const UserDashboard = () => (
+  const quickActions = [
+    { label: "New Sale", icon: PlusCircleIcon, path: "/sale" },
+    { label: "View Sales", icon: BanknoteIcon, path: "/sale-entries" },
+    { label: "New Expense", icon: ReceiptIcon, path: "/expenses" },
+    {
+      label: "View Expenses",
+      icon: ClipboardListIcon,
+      path: "/expenses-entries",
+    },
+    { label: "Receipts", icon: ChartPie, path: "/reciepts" },
+    { label: "View Receipts", icon: ScanSearch, path: "/reciepts-entries" },
+  ];
+
+  return (
     <div className="space-y-8">
-      {/* Welcome Section with Premium Badge */}
+      {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center space-x-2 mb-1">
@@ -137,8 +168,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Balance Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4">
+        {/* Income Card */}
         <div
           className="relative group overflow-hidden bg-white p-5 rounded-2xl shadow-sm
                       hover:shadow-xl transition-all duration-300"
@@ -155,14 +187,12 @@ export default function Dashboard() {
               <span className="text-sm text-gray-600">Income</span>
             </div>
             <p className="text-2xl font-bold text-gray-800">
-              ₹
-              {sales
-                .reduce((sum, sale) => sum + Number(sale.amount), 0)
-                .toLocaleString()}
+              ₹{totalSales.toLocaleString()}
             </p>
           </div>
         </div>
 
+        {/* Expense Card */}
         <div
           className="relative group overflow-hidden bg-white p-5 rounded-2xl shadow-sm
                       hover:shadow-xl transition-all duration-300"
@@ -179,10 +209,7 @@ export default function Dashboard() {
               <span className="text-sm text-gray-600">Expense</span>
             </div>
             <p className="text-2xl font-bold text-gray-800">
-              ₹
-              {expenses
-                .reduce((sum, expense) => sum + Number(expense.amount), 0)
-                .toLocaleString()}
+              ₹{totalExpenses.toLocaleString()}
             </p>
           </div>
         </div>
@@ -194,50 +221,95 @@ export default function Dashboard() {
           Quick Actions
         </h2>
         <div className="grid grid-cols-2 gap-4">
-          <QuickActionButton
-            label="New Sale"
-            icon={PlusCircleIcon}
-            path="/sale"
-          />
-          <QuickActionButton
-            label="View Sales"
-            icon={BanknoteIcon}
-            path="/sale-entries"
-          />
-          <QuickActionButton
-            label="New Expense"
-            icon={ReceiptIcon}
-            path="/expenses"
-          />
-          <QuickActionButton
-            label="View Expenses"
-            icon={ClipboardListIcon}
-            path="/expenses-entries"
-          />
-          <QuickActionButton
-            label="Receipts"
-            icon={ChartPie}
-            path="/reciepts"
-          />
-          <QuickActionButton
-            label="View Receipts"
-            icon={ScanSearch}
-            path="/reciepts-entries"
-          />
+          {quickActions.map((action) => (
+            <QuickActionButton
+              key={action.path}
+              {...action}
+              onClick={() => router.push(action.path)}
+            />
+          ))}
           <CloseDayModal />
         </div>
       </div>
     </div>
   );
+};
+
+// Dashboard Content Component
+function DashboardContent() {
+  const router = useRouter();
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) {
+      router.push("/login");
+    } else {
+      setToken(storedToken);
+    }
+  }, [router]);
+
+  const {
+    data: user,
+    isLoading: userLoading,
+    error: userError,
+  } = useQuery({
+    queryKey: ["user", token],
+    queryFn: () => fetchUserData(token),
+    enabled: !!token,
+  });
+
+  const { data: sales = [], isLoading: salesLoading } = useQuery({
+    queryKey: ["sales", token],
+    queryFn: () => fetchSalesData(token),
+    enabled: !!token && !!user,
+  });
+
+  const { data: expenses = [], isLoading: expensesLoading } = useQuery({
+    queryKey: ["expenses", token],
+    queryFn: () => fetchExpensesData(token),
+    enabled: !!token && !!user,
+  });
+
+  if (!token) {
+    return null;
+  }
+
+  if (userError) {
+    return (
+      <ErrorDisplay
+        error="Failed to load user data. Please try again."
+        retryFn={() => window.location.reload()}
+      />
+    );
+  }
+
+  const isLoading = userLoading || salesLoading || expensesLoading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       <main className="max-w-lg mx-auto px-4 py-8 pb-24">
-        {user.role === "admin" ? <AdminDashboard /> : <UserDashboard />}
+        {user?.role === "admin" ? (
+          <AdminDashboard />
+        ) : (
+          <UserDashboard
+            sales={sales}
+            expenses={expenses}
+            isLoading={isLoading}
+            error={userError}
+          />
+        )}
       </main>
-
-      {/* Bottom Navigation */}
       <Header />
     </div>
+  );
+}
+
+// Main Dashboard Component
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
