@@ -12,7 +12,7 @@ const CloseDayModal = () => {
   const [pin, setPin] = useState(["", "", "", ""]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const correctPin = process.env.NEXT_PUBLIC_CLOSE_DAY_PIN;
+  const correctPin = process.env.CLOSE_DAY_PIN || "1356"; // Default PIN
 
   const handlePinChange = (index, value) => {
     if (/^\d*$/.test(value)) {
