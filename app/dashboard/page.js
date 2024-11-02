@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Header from "../components/Header";
 import AdminDashboard from "../components/AdminDashboard";
+import CloseDayModal from "../components/CloseDayModal";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -223,11 +224,7 @@ export default function Dashboard() {
             icon={ScanSearch}
             path="/reciepts-entries"
           />
-          <QuickActionButton
-            label="Close Day"
-            icon={LogOutIcon}
-            path="/day-close"
-          />
+          <CloseDayModal />
         </div>
       </div>
     </div>
