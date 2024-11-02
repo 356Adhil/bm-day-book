@@ -4,7 +4,7 @@ import {
   LockIcon,
   CheckCircle2Icon,
   XCircleIcon,
-  TicketCheckIcon
+  TicketCheckIcon,
 } from "lucide-react";
 
 const CloseDayModal = () => {
@@ -12,7 +12,7 @@ const CloseDayModal = () => {
   const [pin, setPin] = useState(["", "", "", ""]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const correctPin = process.env.NEXT_PUBLIC_CLOSE_DAY_PIN || "1234"; // Fallback PIN
+  const correctPin = process.env.NEXT_PUBLIC_CLOSE_DAY_PIN;
 
   const handlePinChange = (index, value) => {
     if (/^\d*$/.test(value)) {
@@ -109,7 +109,9 @@ const CloseDayModal = () => {
         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
           <TicketCheckIcon className="w-5 h-5 text-red-500" />
         </div>
-        <span className="text-sm font-medium text-gray-700">Close This Day</span>
+        <span className="text-sm font-medium text-gray-700">
+          Close This Day
+        </span>
       </button>
     );
   }
