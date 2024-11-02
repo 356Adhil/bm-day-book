@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import {
-  TrendingDown,
-  IndianRupee,
   ArrowUpRight,
   ArrowDownRight,
-  Download,
   Calendar,
+  Wallet,
+  CreditCard,
+  TrendingUp,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -32,8 +32,8 @@ export default function AdminDashboard() {
     async function fetchReports(date) {
       try {
         const [salesResponse, expensesResponse] = await Promise.all([
-          fetch(`/api/reports/sales?date=${date}`), // Pass the selected date
-          fetch(`/api/reports/expenses?date=${date}`), // Pass the selected date
+          fetch(`/api/reports/sales?date=${date}`),
+          fetch(`/api/reports/expenses?date=${date}`),
         ]);
 
         const salesData = await salesResponse.json();
@@ -108,44 +108,20 @@ export default function AdminDashboard() {
           expensesTrendValue: `${
             expensesChange >= 0 ? "+" : ""
           }${expensesTrendValue}%`,
-          profitMarginTrendValue, // Set the dynamic profit margin trend value
+          profitMarginTrendValue,
         }));
       } catch (error) {
         console.error("Error fetching reports:", error);
       }
     }
 
-    fetchReports(selectedDate); // Fetch reports based on the selected date
+    fetchReports(selectedDate);
   }, [
     selectedDate,
     previousStats.totalSales,
     previousStats.totalExpenses,
     previousStats.profitMargin,
-  ]); // Dependency on selectedDate
-
-  // Custom Button Component
-  const Button = ({
-    children,
-    variant = "default",
-    className = "",
-    ...props
-  }) => {
-    const baseStyle =
-      "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
-    const variants = {
-      default: "bg-blue-600 text-white hover:bg-blue-700",
-      outline: "border border-gray-300 bg-white hover:bg-gray-50 text-gray-700",
-    };
-
-    return (
-      <button
-        className={`${baseStyle} ${variants[variant]} ${className}`}
-        {...props}
-      >
-        {children}
-      </button>
-    );
-  };
+  ]);
 
   // Custom Card Component
   const SummaryCard = ({
@@ -158,91 +134,86 @@ export default function AdminDashboard() {
   }) => {
     const isPositive = trend === "up";
     return (
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="flex flex-col space-y-1.5 p-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-            <Icon className="h-4 w-4 text-gray-500" />
+      <div className="relative bg-white rounded-2xl p-8 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-between mb-6">
+          <div className="bg-gray-50 p-3 rounded-xl">
+            <Icon className="h-6 w-6 text-gray-700" />
           </div>
-          <div className="pt-2">
-            <div className="text-2xl font-bold">{value}</div>
-            <div className="flex items-center space-x-2 mt-1">
-              {trendValue && (
-                <span
-                  className={`flex items-center text-xs ${
-                    isPositive ? "text-green-500" : "text-red-500"
-                  }`}
-                >
-                  {isPositive ? (
-                    <ArrowUpRight className="h-3 w-3" />
-                  ) : (
-                    <ArrowDownRight className="h-3 w-3" />
-                  )}
-                  {trendValue}
-                </span>
+          {trendValue && (
+            <span
+              className={`flex items-center text-sm font-medium px-3 py-1 rounded-full ${
+                isPositive
+                  ? "text-emerald-700 bg-emerald-50"
+                  : "text-rose-700 bg-rose-50"
+              }`}
+            >
+              {isPositive ? (
+                <ArrowUpRight className="h-4 w-4 mr-1" />
+              ) : (
+                <ArrowDownRight className="h-4 w-4 mr-1" />
               )}
-              <p className="text-xs text-gray-500">{subtitle}</p>
-            </div>
-          </div>
+              {trendValue}
+            </span>
+          )}
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <h3 className="text-2xl font-semibold text-gray-900 tracking-tight">
+            {value}
+          </h3>
+          {subtitle && <p className="text-sm text-gray-500 mt-2">{subtitle}</p>}
         </div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="min-h-screen bg-[#F8FAFC] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Financial Dashboard</h1>
-            <p className="text-gray-500 mt-1">
-              Track your business performance and insights
+            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+              Financial Overview
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Track your business performance
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="hidden md:flex h-9 px-3"
-              onClick={() => {
-                const today = new Date();
-                setSelectedDate(today.toISOString().split("T")[0]);
-              }}
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              Select Date
-            </Button>
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm">
+            <Calendar className="h-4 w-4 text-gray-400" />
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)} // Update selected date
-              className="h-9 border border-gray-300 rounded-md p-1"
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="text-sm text-gray-600 bg-transparent border-none focus:outline-none"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <SummaryCard
-            title="Total Sales"
+            title="Total Revenue"
             value={`₹${summaryStats.totalSales.toLocaleString()}`}
-            icon={IndianRupee}
+            icon={Wallet}
             trend="up"
             trendValue={summaryStats.salesTrendValue}
-            subtitle=""
+            subtitle="Total revenue generated"
           />
 
           <SummaryCard
             title="Total Expenses"
             value={`₹${summaryStats.totalExpenses.toLocaleString()}`}
-            icon={TrendingDown}
+            icon={CreditCard}
             trend="down"
             trendValue={summaryStats.expensesTrendValue}
-            subtitle=""
+            subtitle="Total expenses incurred"
           />
+
           <SummaryCard
-            title="Daily Profit Margin"
+            title="Profit Margin"
             value={`${summaryStats.profitMargin.toFixed(1)}%`}
-            icon={IndianRupee}
+            icon={TrendingUp}
             trend={summaryStats.profitMarginTrendValue >= 0 ? "up" : "down"}
             trendValue={summaryStats.profitMarginTrendValue}
             subtitle="Net profit percentage"
