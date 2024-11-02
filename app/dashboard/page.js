@@ -22,6 +22,8 @@ import AdminDashboard from "../components/AdminDashboard";
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sales, setSales] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,6 +40,16 @@ export default function Dashboard() {
         });
 
         if (response.data?.user) {
+          const saleData = await axios.get("/api/reports/sales/list", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setSales(saleData.data);
+
+          const expenseData = await axios.get("/api/reports/expenses/list", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setExpenses(expenseData.data);
+
           setUser(response.data.user);
         } else {
           router.push("/login");
@@ -141,7 +153,12 @@ export default function Dashboard() {
               </div>
               <span className="text-sm text-gray-600">Income</span>
             </div>
-            <p className="text-2xl font-bold text-gray-800">₹0</p>
+            <p className="text-2xl font-bold text-gray-800">
+              ₹
+              {sales
+                .reduce((sum, sale) => sum + Number(sale.amount), 0)
+                .toLocaleString()}
+            </p>
           </div>
         </div>
 
@@ -160,7 +177,12 @@ export default function Dashboard() {
               </div>
               <span className="text-sm text-gray-600">Expense</span>
             </div>
-            <p className="text-2xl font-bold text-gray-800">₹0</p>
+            <p className="text-2xl font-bold text-gray-800">
+              ₹
+              {expenses
+                .reduce((sum, expense) => sum + Number(expense.amount), 0)
+                .toLocaleString()}
+            </p>
           </div>
         </div>
       </div>
