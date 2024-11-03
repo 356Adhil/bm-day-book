@@ -70,37 +70,38 @@ const fetchExpensesData = async (token) => {
     return await db.expenses.toArray();
   }
 };
-const reloadPage = () => window.location.reload();
-const syncDataToServer = async () => {
-  try {
-    const token = localStorage.getItem("token");
+// const reloadPage = () => window.location.reload();
 
-    // Get local sales and expenses data
-    const localSales = await db.sales.toArray();
-    const localExpenses = await db.expenses.toArray();
+// const syncDataToServer = async () => {
+//   try {
+//     const token = localStorage.getItem("token");
 
-    // Send local data to MongoDB
-    await axios.post(
-      "/api/sync/sales",
-      { sales: localSales },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    await axios.post(
-      "/api/sync/expenses",
-      { expenses: localExpenses },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    alert("Data synced successfully");
-    window.location.reload();
-  } catch (error) {
-    console.error("Sync failed", error);
-    alert("Data sync failed. Please try again.");
-  }
-};
+//     // Get local sales and expenses data
+//     const localSales = await db.sales.toArray();
+//     const localExpenses = await db.expenses.toArray();
+
+//     // Send local data to MongoDB
+//     await axios.post(
+//       "/api/sync/sales",
+//       { sales: localSales },
+//       {
+//         headers: { Authorization: `Bearer ${token}` },
+//       }
+//     );
+//     await axios.post(
+//       "/api/sync/expenses",
+//       { expenses: localExpenses },
+//       {
+//         headers: { Authorization: `Bearer ${token}` },
+//       }
+//     );
+//     alert("Data synced successfully");
+//     window.location.reload();
+//   } catch (error) {
+//     console.error("Sync failed", error);
+//     alert("Data sync failed. Please try again.");
+//   }
+// };
 
 // Quick Action Button Component
 const QuickActionButton = ({ label, icon: Icon, path, onClick }) => (
@@ -164,6 +165,41 @@ const ErrorDisplay = ({ error, retryFn }) => (
 // User Dashboard Component
 const UserDashboard = ({ sales, expenses, isLoading, error }) => {
   const router = useRouter();
+  const [isSyncing, setIsSyncing] = useState(false); // Loader state
+
+  const syncDataToServer = async () => {
+    setIsSyncing(true); // Start syncing, set loading to true
+    try {
+      const token = localStorage.getItem("token");
+
+      // Get local sales and expenses data
+      const localSales = await db.sales.toArray();
+      const localExpenses = await db.expenses.toArray();
+
+      // Send local data to MongoDB
+      await axios.post(
+        "/api/sync/sales",
+        { sales: localSales },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      await axios.post(
+        "/api/sync/expenses",
+        { expenses: localExpenses },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      // alert("Data synced successfully");
+      window.location.reload();
+    } catch (error) {
+      console.error("Sync failed", error);
+      alert("Data sync failed. Please try again.");
+    } finally {
+      setIsSyncing(false); // End syncing, set loading to false
+    }
+  };
 
   if (error) {
     return <ErrorDisplay error={error} />;
@@ -279,6 +315,12 @@ const UserDashboard = ({ sales, expenses, isLoading, error }) => {
             className="text-white w-7 h-7 cursor-pointer"
           ></FolderSync>
         </div>
+        {isSyncing && (
+          <div className="flex items-center">
+            <div className="loader"></div> {/* Replace this with your loader/spinner component */}
+            <span className="ml-2 text-gray-700">Syncing data...</span>
+          </div>
+        )}
         {/* // Add reload button to UI */}
         {/* <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
           <RefreshCcw
@@ -385,7 +427,7 @@ function DashboardContent() {
 // Main Dashboard Component
 export default function Dashboard() {
   return (
-    <Suspense fallback={<DashboardContent />}>
+    <Suspense fallback={<LoadingSkeleton />}>
       <DashboardContent />
     </Suspense>
   );
