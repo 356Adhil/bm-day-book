@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import axios from "axios";
 import { Plus, X, PenLine, ArrowLeft } from "lucide-react";
-import { getAllSales, updateSale } from "../services/indexedDB";
-import { syncSales } from "../services/offlineSync";
 
 export default function SaleEntries() {
   const [sales, setSales] = useState([]);
@@ -14,52 +12,26 @@ export default function SaleEntries() {
   const [editingSale, setEditingSale] = useState(null);
   const [updatedAmount, setUpdatedAmount] = useState("");
   const [updatedInvoiceNumber, setUpdatedInvoiceNumber] = useState("");
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
-    const handleOnlineStatus = () => {
-      setIsOffline(!navigator.onLine);
-      if (navigator.onLine) {
-        syncSales().then(() => fetchSalesEntries());
-      }
-    };
-
-    window.addEventListener("online", handleOnlineStatus);
-    window.addEventListener("offline", handleOnlineStatus);
-
-    return () => {
-      window.removeEventListener("online", handleOnlineStatus);
-      window.removeEventListener("offline", handleOnlineStatus);
-    };
-  }, []);
-
-  const fetchSalesEntries = async () => {
-    try {
-      if (!navigator.onLine) {
-        // Fetch from IndexedDB when offline
-        const offlineSales = await getAllSales();
-        setSales(offlineSales);
-      } else {
-        // Fetch from API when online
+    const fetchSalesEntries = async () => {
+      try {
         const token = localStorage.getItem("token");
         const response = await axios.get("/api/reports/sales/list", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setSales(response.data);
+      } catch (error) {
+        console.error("Error fetching sales entries:", error);
+        setError("Failed to fetch sales entries. Please try again later.");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching sales entries:", error);
-      setError("Failed to fetch sales entries. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
     fetchSalesEntries();
   }, []);
 
-  // Add the missing handleEditClick function
   const handleEditClick = (sale) => {
     setEditingSale(sale);
     setUpdatedAmount(sale.amount);
@@ -69,47 +41,31 @@ export default function SaleEntries() {
   const handleUpdateSale = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-    const updatedSaleData = {
-      id: editingSale._id,
-      amount: updatedAmount,
-      invoiceNumber: updatedInvoiceNumber,
-    };
 
     try {
-      if (!navigator.onLine) {
-        // Save to IndexedDB when offline
-        await updateSale(updatedSaleData);
-        // Update local state
-        setSales((prevSales) =>
-          prevSales.map((sale) =>
-            sale._id === editingSale._id
-              ? {
-                  ...sale,
-                  amount: updatedAmount,
-                  invoiceNumber: updatedInvoiceNumber,
-                  updatedOffline: true,
-                }
-              : sale
-          )
-        );
-        alert("Changes saved offline. Will sync when online.");
-      } else {
-        // Update directly to server when online
-        await axios.put(`/api/reports/sales/list`, updatedSaleData, {
+      await axios.put(
+        `/api/reports/sales/list`,
+        {
+          id: editingSale._id,
+          amount: updatedAmount,
+          invoiceNumber: updatedInvoiceNumber,
+        },
+        {
           headers: { Authorization: `Bearer ${token}` },
-        });
-        setSales((prevSales) =>
-          prevSales.map((sale) =>
-            sale._id === editingSale._id
-              ? {
-                  ...sale,
-                  amount: updatedAmount,
-                  invoiceNumber: updatedInvoiceNumber,
-                }
-              : sale
-          )
-        );
-      }
+        }
+      );
+
+      setSales((prevSales) =>
+        prevSales.map((sale) =>
+          sale._id === editingSale._id
+            ? {
+                ...sale,
+                amount: updatedAmount,
+                invoiceNumber: updatedInvoiceNumber,
+              }
+            : sale
+        )
+      );
 
       setEditingSale(null);
       setUpdatedAmount("");
@@ -180,7 +136,7 @@ export default function SaleEntries() {
             {sales.length > 0 ? (
               sales.map((sale) => (
                 <div
-                  key={sale._id ? sale._id : sale.id}
+                  key={sale._id}
                   className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-center justify-between">

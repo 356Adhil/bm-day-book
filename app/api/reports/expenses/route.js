@@ -1,4 +1,3 @@
-// bm-day-book/app/api/reports/expenses/route.js
 import { connectDB } from "@/app/services/db";
 import Expense from "@/app/services/models/Expense";
 

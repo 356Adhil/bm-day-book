@@ -57,7 +57,6 @@ export const POST = async (req) => {
 
   try {
     const saleData = await req.json(); // Parse JSON data from request body
-    console.log("Sale data received:", saleData);
 
     console.log("Sale data received:", saleData);
     // Validate the required fields (amount and date)
