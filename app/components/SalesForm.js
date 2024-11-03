@@ -36,7 +36,7 @@ export default function SalesForm({ onSubmit, loading }) {
                 ₹
               </div>
               <input
-                type="tel"
+                type="number"
                 value={saleAmount}
                 onChange={(e) => setSaleAmount(e.target.value)}
                 onFocus={() => setFocusedField("amount")}

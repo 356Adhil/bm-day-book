@@ -14,11 +14,14 @@ import {
   SparklesIcon,
   ChartPie,
   ScanSearch,
+  RefreshCcw,
+  FolderSync,
 } from "lucide-react";
 import Header from "../components/Header";
 import AdminDashboard from "../components/AdminDashboard";
 import CloseDayModal from "../components/CloseDayModal";
 import { useQuery } from "@tanstack/react-query";
+import db from "../services/indexedDb";
 
 // API functions
 const fetchUserData = async (token) => {
@@ -33,17 +36,70 @@ const fetchUserData = async (token) => {
 };
 
 const fetchSalesData = async (token) => {
-  const response = await axios.get("/api/reports/sales/list", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+  try {
+    const response = await axios.get("/api/reports/sales/list", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // Sync to IndexedDB
+    await db.sales.clear();
+    await db.sales.bulkAdd(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    console.error("Failed to fetch sales from API, fetching from IndexedDB");
+    // Retrieve data from IndexedDB if offline
+    return await db.sales.toArray();
+  }
 };
 
 const fetchExpensesData = async (token) => {
-  const response = await axios.get("/api/reports/expenses/list", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+  try {
+    const response = await axios.get("/api/reports/expenses/list", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // Sync to IndexedDB
+    await db.expenses.clear();
+    await db.expenses.bulkAdd(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch expenses from API, fetching from IndexedDB");
+    return await db.expenses.toArray();
+  }
+};
+const reloadPage = () => window.location.reload();
+const syncDataToServer = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    // Get local sales and expenses data
+    const localSales = await db.sales.toArray();
+    const localExpenses = await db.expenses.toArray();
+
+    // Send local data to MongoDB
+    await axios.post(
+      "/api/sync/sales",
+      { sales: localSales },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    await axios.post(
+      "/api/sync/expenses",
+      { expenses: localExpenses },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    alert("Data synced successfully");
+    window.location.reload();
+  } catch (error) {
+    console.error("Sync failed", error);
+    alert("Data sync failed. Please try again.");
+  }
 };
 
 // Quick Action Button Component
@@ -215,6 +271,23 @@ const UserDashboard = ({ sales, expenses, isLoading, error }) => {
         </div>
       </div>
 
+      {/* // Add Sync button to UI */}
+      <div className="flex items-center gap-5">
+        <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+          <FolderSync
+            onClick={syncDataToServer}
+            className="text-white w-7 h-7 cursor-pointer"
+          ></FolderSync>
+        </div>
+        {/* // Add reload button to UI */}
+        {/* <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+          <RefreshCcw
+            onClick={reloadPage}
+            className="text-white w-7 h-7 cursor-pointer"
+          ></RefreshCcw>
+        </div> */}
+      </div>
+
       {/* Quick Actions */}
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">
@@ -239,6 +312,10 @@ const UserDashboard = ({ sales, expenses, isLoading, error }) => {
 function DashboardContent() {
   const router = useRouter();
   const [token, setToken] = useState(null);
+
+  // useEffect(() => {
+  //   syncDataToServer(); // Try syncing data on component load
+  // }, []);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
