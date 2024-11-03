@@ -17,7 +17,7 @@ export default function SalesForm({ onSubmit, loading }) {
       <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
         {/* Form Header */}
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800">New Sale Entry</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Sale Entry</h2>
           <p className="text-gray-500 mt-2">Enter the sale details below</p>
         </div>
 
@@ -36,7 +36,7 @@ export default function SalesForm({ onSubmit, loading }) {
                 ₹
               </div>
               <input
-                type="number"
+                type="tel"
                 value={saleAmount}
                 onChange={(e) => setSaleAmount(e.target.value)}
                 onFocus={() => setFocusedField("amount")}
