@@ -108,7 +108,7 @@ export default function BottomNav() {
       <div className="h-28" />
 
       {/* Fixed Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 z-40">
         {/* Premium Glass Background */}
         <div className="absolute inset-0 bg-white/80 backdrop-blur-2xl" />
 
