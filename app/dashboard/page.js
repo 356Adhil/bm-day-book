@@ -308,7 +308,7 @@ function DashboardContent() {
 // Main Dashboard Component
 export default function Dashboard() {
   return (
-    <Suspense fallback={<LoadingSkeleton />}>
+    <Suspense fallback={<DashboardContent />}>
       <DashboardContent />
     </Suspense>
   );
