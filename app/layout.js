@@ -1,6 +1,11 @@
+// app/layout.js
+"use client";
 import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "./providers";
+import useServiceWorker from "./hooks/useServiceWorker";
+import MetadataLayout from "./metadata-layout"; // Import the new layout
+import OnlineSync from "./services/OnlineSync";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -13,29 +18,14 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-// Metadata for the document
-export const metadata = {
-  title: "BM Day Book",
-  description: "Bm Day Book is a sales amd expense tracking app",
-};
-
 export default function RootLayout({ children }) {
+  useServiceWorker();
   return (
-    <html lang="en">
-      <head>
-        <link rel="icon" href="/compass-regular.png" type="image/png" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/compass-regular.png" />
-        <meta name="theme-color" content="#000000" />
-
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Add any additional meta tags or links as needed */}
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers>{children}</Providers>
-      </body>
-    </html>
+    <MetadataLayout>
+      <Providers>
+        <OnlineSync /> 
+        <>{children}</>
+      </Providers>
+    </MetadataLayout>
   );
 }

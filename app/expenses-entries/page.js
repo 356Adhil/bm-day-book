@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import axios from "axios";
 import { Plus, X, PenLine, ArrowLeft } from "lucide-react";
+import {
+  getAllExpenses,
+  saveExpense,
+  updateExpense,
+} from "../services/indexedDB";
+import { syncExpenses } from "../services/offlineSync";
 
 export default function ExpenseEntries() {
   const [expenses, setExpenses] = useState([]);
@@ -12,25 +18,64 @@ export default function ExpenseEntries() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [updatedAmount, setUpdatedAmount] = useState("");
   const [updatedDescription, setUpdatedDescription] = useState("");
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchExpenseEntries = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get("/api/reports/expenses/list", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setExpenses(response.data);
+        setLoading(true);
+
+        if (isOnline) {
+          const token = localStorage.getItem("token");
+          const response = await axios.get("/api/reports/expenses/list", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setExpenses(response.data);
+
+          // Sync any pending offline expenses
+          await syncExpenses();
+        } else {
+          // Fetch from IndexedDB when offline
+          const offlineExpenses = await getAllExpenses();
+          console.log(offlineExpenses);
+          setExpenses(offlineExpenses);
+        }
       } catch (error) {
         console.error("Error fetching expense entries:", error);
         setError("Failed to fetch expense entries. Please try again later.");
+
+        // Fallback to IndexedDB if online fetch fails
+        try {
+          const offlineExpenses = await getAllExpenses();
+          setExpenses(offlineExpenses);
+          setError(null);
+        } catch (dbError) {
+          setError(
+            "Failed to fetch expenses from both server and local storage."
+          );
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchExpenseEntries();
-  }, []);
+  }, [isOnline]);
 
   const handleEditClick = (expense) => {
     setEditingExpense(expense);
@@ -40,21 +85,30 @@ export default function ExpenseEntries() {
 
   const handleUpdateExpense = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("token");
+
+    const updatedExpenseData = {
+      id: editingExpense._id,
+      amount: updatedAmount,
+      description: updatedDescription,
+      date: new Date().toISOString(),
+    };
 
     try {
-      await axios.put(
-        `/api/reports/expenses/list`,
-        {
-          id: editingExpense._id,
-          amount: updatedAmount,
-          description: updatedDescription,
-        },
-        {
+      if (isOnline) {
+        const token = localStorage.getItem("token");
+        await axios.put(`/api/reports/expenses/list`, updatedExpenseData, {
           headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+        });
+      } else {
+        // Store in IndexedDB when offline
+        await saveExpense({
+          ...updatedExpenseData,
+          syncStatus: "pending",
+          originalId: editingExpense._id,
+        });
+      }
 
+      // Update local state
       setExpenses((prevExpenses) =>
         prevExpenses.map((expense) =>
           expense._id === editingExpense._id
@@ -70,6 +124,10 @@ export default function ExpenseEntries() {
       setEditingExpense(null);
       setUpdatedAmount("");
       setUpdatedDescription("");
+
+      if (!isOnline) {
+        alert("Changes saved offline. Will sync when online.");
+      }
     } catch (error) {
       console.error("Error updating expense entry:", error);
       setError("Failed to update expense entry. Please try again.");
@@ -121,7 +179,14 @@ export default function ExpenseEntries() {
             <div className="text-3xl font-bold text-gray-800 mb-1">
               ₹
               {expenses
-                .reduce((sum, expense) => sum + Number(expense.amount), 0)
+                .reduce(
+                  (sum, expense) =>
+                    sum +
+                    Number(
+                      expense.amount ? expense.amount : expense.expenseAmount
+                    ),
+                  0
+                )
                 .toLocaleString()}
             </div>
             <div className="text-sm text-blue-500 font-medium">
@@ -136,7 +201,7 @@ export default function ExpenseEntries() {
             {expenses.length > 0 ? (
               expenses.map((expense) => (
                 <div
-                  key={expense._id}
+                  key={expense._id ? expense._id : expense.id}
                   className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-center justify-between">
@@ -153,7 +218,12 @@ export default function ExpenseEntries() {
                         </button>
                       </div>
                       <div className="text-xl font-bold text-gray-800">
-                        ₹{Number(expense.amount).toLocaleString()}
+                        ₹
+                        {Number(
+                          expense.amount
+                            ? expense.amount
+                            : expense.expenseAmount
+                        ).toLocaleString()}
                       </div>
                       <div className="text-sm text-gray-400 mt-1">
                         {new Date(expense.date).toLocaleDateString("en-US", {
