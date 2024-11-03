@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import axios from "axios";
 import { Plus, X, PenLine, ArrowLeft } from "lucide-react";
+import db from "../services/indexedDb"; // Make sure this is your IndexedDB setup file
 
 export default function SaleEntries() {
   const [sales, setSales] = useState([]);
@@ -14,13 +15,29 @@ export default function SaleEntries() {
   const [updatedInvoiceNumber, setUpdatedInvoiceNumber] = useState("");
 
   useEffect(() => {
+    // Fetch sales from IndexedDB and sync with API if online
     const fetchSalesEntries = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get("/api/reports/sales/list", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setSales(response.data);
+        // Fetch from IndexedDB
+        const localSales = await db.sales.toArray();
+        setSales(localSales);
+
+        // Sync with the server if online
+        if (navigator.onLine) {
+          const token = localStorage.getItem("token");
+          const response = await axios.get("/api/reports/sales/list", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          // Assuming the API returns an array of sales
+          // Save the fetched sales to IndexedDB
+          for (const sale of response.data) {
+            await db.sales.put(sale); // Upsert operation
+          }
+
+          // Update state with API data
+          setSales(response.data);
+        }
       } catch (error) {
         console.error("Error fetching sales entries:", error);
         setError("Failed to fetch sales entries. Please try again later.");
@@ -33,6 +50,8 @@ export default function SaleEntries() {
   }, []);
 
   const handleEditClick = (sale) => {
+    console.log("Editing sale:", sale);
+
     setEditingSale(sale);
     setUpdatedAmount(sale.amount);
     setUpdatedInvoiceNumber(sale.invoiceNumber);
@@ -43,6 +62,7 @@ export default function SaleEntries() {
     const token = localStorage.getItem("token");
 
     try {
+      // Update on the server
       await axios.put(
         `/api/reports/sales/list`,
         {
@@ -55,6 +75,13 @@ export default function SaleEntries() {
         }
       );
 
+      // Update IndexedDB
+      await db.sales.update(editingSale._id, {
+        amount: updatedAmount,
+        invoiceNumber: updatedInvoiceNumber,
+      });
+
+      // Update state
       setSales((prevSales) =>
         prevSales.map((sale) =>
           sale._id === editingSale._id
@@ -73,6 +100,25 @@ export default function SaleEntries() {
     } catch (error) {
       console.error("Error updating sale entry:", error);
       setError("Failed to update sale entry. Please try again.");
+    }
+  };
+
+  const handleAddSale = async (newSale) => {
+    // This function will be called when a new sale is added
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post("/api/reports/sales", newSale, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Save to IndexedDB
+      await db.sales.add(response.data); // Assuming the API returns the created sale
+
+      // Update state
+      setSales((prevSales) => [...prevSales, response.data]);
+    } catch (error) {
+      console.error("Error adding new sale:", error);
+      setError("Failed to add new sale. Please try again.");
     }
   };
 
@@ -107,7 +153,14 @@ export default function SaleEntries() {
               <h1 className="text-xl font-semibold text-gray-800">Sales</h1>
             </div>
             <a href="/sale">
-              <button className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
+              <button
+                onClick={() =>
+                  handleAddSale({
+                    /* pass new sale data here */
+                  })
+                }
+                className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+              >
                 <Plus className="w-5 h-5" />
               </button>
             </a>
